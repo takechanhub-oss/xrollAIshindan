@@ -21,7 +21,7 @@ scraper = Nitter()
 
 def collect():
     # 🔍 Xから動画を探すキーワード（自由に変えてや！）
-    keywords = ["裏垢女子", "ハプニング", "拡散希望"] 
+    keywords = ["裏垢女子", "自撮り界隈", "えちえち", "マン凸", "パイ凸", "潮吹き"] 
     ref = db.reference('online_chat/auto_videos')
     
     for kw in keywords:
