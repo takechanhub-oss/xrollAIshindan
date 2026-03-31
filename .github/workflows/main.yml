@@ -1,0 +1,23 @@
+name: Takeru Video Bot
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 1時間に1回、自動で動画を拾いに行く設定
+  workflow_dispatch: # ボタンを押して今すぐ動かしたい時用
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install firebase-admin ntscraper
+      - name: Run bot
+        env:
+          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+        run: python bot.py
