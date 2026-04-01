@@ -36,8 +36,7 @@ def get_html(url):
         return ""
 
 def collect():
-    # 🔍 ターゲットキーワード（たける指定のワードを追加＆実写特化に厳選！）
-    # 🌟 追加：潮吹き, JK, パイパン, オナニー, 愛液
+    # 🔍 ターゲットキーワード（たける指定の神ワード軍団！）
     targets = [
         "日本人", "韓国", "JK", "潮吹き", "パイパン", 
         "オナニー", "愛液", "自撮り", "流出", "ハプニング", "女子大生"
@@ -55,10 +54,12 @@ def collect():
         encoded_kw = urllib.parse.quote(kw)
         print(f"🚀 ジャンル 【{kw}】 をハント中...")
 
-        # 巡回する3大エロサイトの設定
+        # 🌟 ここが進化ポイント！
+        # Pornhubは「&o=mr」(新着順)、XVideosは「&sort=uploaddate」をつけて、
+        # 常に誰も見たことない最新の動画を引っ張ってくるようにしたで！
         sites = [
-            {"name": "PH", "url": f"https://jp.pornhub.com/video/search?search={encoded_kw}", "re": r'viewkey=(ph[0-9a-f]+)', "prefix": "https://jp.pornhub.com/embed/"},
-            {"name": "XV", "url": f"https://www.xvideos.com/?k={encoded_kw}", "re": r'video(\d+)', "prefix": "https://www.xvideos.com/embedframe/"},
+            {"name": "PH", "url": f"https://jp.pornhub.com/video/search?search={encoded_kw}&o=mr", "re": r'viewkey=(ph[0-9a-f]+)', "prefix": "https://jp.pornhub.com/embed/"},
+            {"name": "XV", "url": f"https://www.xvideos.com/?k={encoded_kw}&sort=uploaddate", "re": r'video(\d+)', "prefix": "https://www.xvideos.com/embedframe/"},
             {"name": "XR", "url": f"https://xroll.net/search/{encoded_kw}", "re": r'v/([a-zA-Z0-9]+)', "prefix": "https://xroll.net/embed/"}
         ]
 
@@ -67,8 +68,8 @@ def collect():
                 html = get_html(site["url"])
                 ids = list(set(re.findall(site["re"], html)))
                 
-                # 各ワード・各サイトから最大4件ずつ追加
-                for vid in ids[:4]: 
+                # 🌟 さらに進化ポイント！ 4件 -> 10件に大増量！
+                for vid in ids[:10]: 
                     v_url = f"{site['prefix']}{vid}"
                     if v_url not in existing_urls:
                         ref.push({
@@ -106,6 +107,6 @@ def manage_storage(ref):
         print("🗑️ メンテナンス完了。スッキリ整理したで！")
 
 if __name__ == "__main__":
-    print("🎬 Takeru Ultimate Collector V3 (Specified Keywords) 起動...")
+    print("🎬 Takeru Ultimate Collector V4 (Max Power Edition) 起動...")
     collect()
     print("✨ 全ミッション完了や！")
