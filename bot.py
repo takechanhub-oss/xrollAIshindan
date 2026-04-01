@@ -14,7 +14,7 @@ if not key_json:
 key_dict = json.loads(key_json)
 cred = credentials.Certificate(key_dict)
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://monitorsystem-cb31a-default-rtdb.firebaseio.com'
+    'databaseURL': 'https://faceidshindan-default-rtdb.firebaseio.com'
 })
 
 scraper = Nitter()
