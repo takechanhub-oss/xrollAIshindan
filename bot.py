@@ -7,7 +7,6 @@ import urllib.request
 import re
 
 # 🌟 1. Firebase初期化
-# GitHubのSecretsに保存したFIREBASE_KEY（JSON文字列）を読み込む
 key_json = os.environ.get('FIREBASE_KEY')
 if not key_json:
     print("❌ エラー: GitHubのSecret 'FIREBASE_KEY' が設定されてへんで！")
@@ -23,26 +22,25 @@ except Exception as e:
     print(f"❌ Firebase初期化エラー: {e}")
     exit(1)
 
-# HTMLを取得するための共通関数
+# HTML取得用の共通関数
 def get_html(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
     try:
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=15) as response:
             return response.read().decode('utf-8', errors='ignore')
     except Exception as e:
-        print(f"⚠️ アクセス失敗 ({url}): {e}")
+        print(f"⚠️ アクセス失敗: {e}")
         return ""
 
 def collect():
-    # 🔍 ターゲットに刺さるキーワード（日本人、韓国、中国、アニメ、コスプレ）
-    # ここを増やすとバリエーションが広がるで！
-    targets = ["日本人", "韓国", "chinese", "anime", "hentai", "コスプレ"]
+    # 🔍 ターゲットキーワード（日本人・アジア・アニメ・生っぽいやつ）
+    targets = ["日本人", "韓国", "chinese", "anime", "hentai", "コスプレ", "自撮り", "JK", "ハプニング"]
     ref = db.reference('v_data/auto_videos')
     
-    # 既存のURLをチェックして重複を避ける（任意）
+    # 🌟 重複防止用の既存URLリスト取得
     existing_data = ref.get()
     existing_urls = []
     if existing_data:
@@ -50,77 +48,58 @@ def collect():
 
     for kw in targets:
         encoded_kw = urllib.parse.quote(kw)
-        print(f"🚀 ジャンル 【{kw}】 を各サイトで探索中...")
+        print(f"🚀 ジャンル 【{kw}】 をハント中...")
 
-        # --- 🎬 Pornhub セクション ---
-        try:
-            html = get_html(f"https://jp.pornhub.com/video/search?search={encoded_kw}")
-            viewkeys = list(set(re.findall(r'viewkey=(ph[0-9a-f]+)', html)))
-            for vk in viewkeys[:3]: # 各単語3件ずつ
-                video_url = f"https://jp.pornhub.com/embed/{vk}"
-                if video_url not in existing_urls:
-                    ref.push({
-                        'url': video_url,
-                        'title': f"【{kw}】注目映像(PH)",
-                        'author': "Premium_PH",
-                        'timestamp': time.time()
-                    })
-                    print(f"✅ PH保存: {vk}")
-        except: pass
+        # 巡回する3大エロサイトの設定
+        sites = [
+            {"name": "PH", "url": f"https://jp.pornhub.com/video/search?search={encoded_kw}", "re": r'viewkey=(ph[0-9a-f]+)', "prefix": "https://jp.pornhub.com/embed/"},
+            {"name": "XV", "url": f"https://www.xvideos.com/?k={encoded_kw}", "re": r'video(\d+)', "prefix": "https://www.xvideos.com/embedframe/"},
+            {"name": "XR", "url": f"https://xroll.net/search/{encoded_kw}", "re": r'v/([a-zA-Z0-9]+)', "prefix": "https://xroll.net/embed/"}
+        ]
 
-        # --- 🎬 XVideos セクション ---
-        try:
-            html = get_html(f"https://www.xvideos.com/?k={encoded_kw}")
-            v_ids = list(set(re.findall(r'video(\d+)', html)))
-            for vid in v_ids[:3]:
-                video_url = f"https://www.xvideos.com/embedframe/{vid}"
-                if video_url not in existing_urls:
-                    ref.push({
-                        'url': video_url,
-                        'title': f"【{kw}】激レア映像(XV)",
-                        'author': "X_VIP",
-                        'timestamp': time.time()
-                    })
-                    print(f"✅ XV保存: {vid}")
-        except: pass
+        for site in sites:
+            try:
+                html = get_html(site["url"])
+                ids = list(set(re.findall(site["re"], html)))
+                
+                # 各ワード・各サイトから最大4件ずつ追加（1時間で約100本増える計算）
+                for vid in ids[:4]: 
+                    v_url = f"{site['prefix']}{vid}"
+                    if v_url not in existing_urls:
+                        ref.push({
+                            'url': v_url,
+                            'title': f"【{kw}】最新({site['name']})",
+                            'author': f"{site['name']}_Master",
+                            'timestamp': time.time()
+                        })
+                        print(f"✅ {site['name']}保存: {vid}")
+            except: pass
+        
+        time.sleep(2) # サーバーを怒らせないための休憩
 
-        # --- 🎬 xRoll セクション ---
-        try:
-            html = get_html(f"https://xroll.net/search/{encoded_kw}")
-            xr_ids = list(set(re.findall(r'v/([a-zA-Z0-9]+)', html)))
-            for xid in xr_ids[:3]:
-                video_url = f"https://xroll.net/embed/{xid}"
-                if video_url not in existing_urls:
-                    ref.push({
-                        'url': video_url,
-                        'title': f"【{kw}】最新流出(XR)",
-                        'author': "Roll_Master",
-                        'timestamp': time.time()
-                    })
-                    print(f"✅ XR保存: {xid}")
-        except: pass
+    # 🌟 2. データベースのメンテナンス（1300本の壁）
+    manage_storage(ref)
 
-        # サーバー負荷軽減のために少し待機
-        time.sleep(2)
-
-    # 🌟 最後にデータの整理
-    clean_up(ref)
-
-# 🧹 データベースを最大50件に保つ関数
-def clean_up(ref):
-    print("🧹 データベースの整理中（最大50件をキープ）...")
+def manage_storage(ref):
     data = ref.get()
-    if data and len(data) > 50:
-        # タイムスタンプ順（古い順）に並び替え
+    if not data: return
+    
+    count = len(data)
+    print(f"📊 現在のストック: {count}本")
+    
+    # 🌟 たけるの指定：1300本超えたら古い100本を抹消！
+    if count >= 1300:
+        print("🚨 1300本到達！古い動画100本をシュートするわ。")
+        # タイムスタンプの古い順（昇順）に並び替え
         items = sorted(data.items(), key=lambda x: x[1].get('timestamp', 0))
-        # 50件を超える古い分を削除
-        excess = len(data) - 50
-        for i in range(excess):
-            key_to_remove = items[i][0]
-            ref.child(key_to_remove).delete()
-            print(f"🗑️ 古いデータを整理したで: {key_to_remove}")
+        
+        for i in range(100):
+            key_to_delete = items[i][0]
+            ref.child(key_to_delete).delete()
+        
+        print("🗑️ メンテナンス完了。1200本にスッキリ整理したで！")
 
 if __name__ == "__main__":
-    print("🎬 Takeru Ultimate Video Bot 起動...")
+    print("🎬 Takeru Ultimate Collector V2 (1300-Limit) 起動...")
     collect()
-    print("✨ 全工程完了！お宝動画がFirebaseに詰まったで！")
+    print("✨ 全ミッション完了や！")
