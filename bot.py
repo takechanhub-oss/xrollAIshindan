@@ -35,7 +35,7 @@ def get_html(url):
         return response.read().decode('utf-8', errors='ignore')
 
 def collect():
-    # 🔍 ターゲットキーワード
+    # 🔍 ターゲットキーワード（たける指定の神ワード軍団！）
     targets = [
         "日本人", "韓国", "JK", "潮吹き", "パイパン", 
         "オナニー", "愛液", "自撮り", "流出", "ハプニング", "女子大生"
@@ -50,42 +50,36 @@ def collect():
 
     for kw in targets:
         encoded_kw = urllib.parse.quote(kw)
-        print(f"🚀 ジャンル 【{kw}】 をハント中...")
+        print(f"🚀 ジャンル 【{kw}】 をPHでハント中...")
 
-        # 🌟 V4の時の「少し緩い抜き出しルール」に戻したで！
-        sites = [
-            {"name": "PH", "url": f"https://jp.pornhub.com/video/search?search={encoded_kw}&o=mr", "re": r'viewkey=(ph[0-9a-f]+)', "prefix": "https://jp.pornhub.com/embed/"},
-            {"name": "XV", "url": f"https://www.xvideos.com/?k={encoded_kw}&sort=uploaddate", "re": r'video(\d+)', "prefix": "https://www.xvideos.com/embedframe/"},
-            {"name": "XR", "url": f"https://xroll.net/search/{encoded_kw}", "re": r'v/([a-zA-Z0-9]+)', "prefix": "https://xroll.net/embed/"}
-        ]
-
-        for site in sites:
-            try:
-                html = get_html(site["url"])
-                ids = list(set(re.findall(site["re"], html)))
-                
-                if not ids:
-                    print(f"⚠️ {site['name']} : 動画が見つからんかったわ（ブロックされたか結果ゼロ）")
-                    continue
-
-                for vid in ids[:10]: 
-                    v_url = f"{site['prefix']}{vid}"
-                    if v_url not in existing_urls:
-                        ref.push({
-                            'url': v_url,
-                            'title': f"【{kw}】最新({site['name']})",
-                            'author': f"{site['name']}_Master",
-                            'timestamp': time.time()
-                        })
-                        existing_urls.append(v_url)
-                        print(f"✅ {site['name']}保存: {vid}")
-
-            except urllib.error.HTTPError as e:
-                print(f"❌ {site['name']} に弾かれたわ！ (HTTP Error {e.code})")
-            except Exception as e:
-                print(f"❌ {site['name']} 予期せぬエラー: {e}")
+        # 🌟 PH専用に絞って、新着順でブッコ抜く！
+        ph_url = f"https://jp.pornhub.com/video/search?search={encoded_kw}&o=mr"
         
-        time.sleep(3)
+        try:
+            html = get_html(ph_url)
+            ids = list(set(re.findall(r'viewkey=(ph[0-9a-f]+)', html)))
+            
+            if not ids:
+                print(f"⚠️ PH : 【{kw}】の動画が見つからんかったわ")
+                continue
+
+            # 🌟 XV/XRを消した分、PHから一気に「15本」拾うように増強！
+            for vid in ids[:15]: 
+                v_url = f"https://jp.pornhub.com/embed/{vid}"
+                if v_url not in existing_urls:
+                    ref.push({
+                        'url': v_url,
+                        'title': f"【{kw}】最新(PH)",
+                        'author': "PH_Master",
+                        'timestamp': time.time()
+                    })
+                    existing_urls.append(v_url)
+                    print(f"✅ PH保存: {vid}")
+
+        except Exception as e:
+            print(f"❌ PH 予期せぬエラー: {e}")
+        
+        time.sleep(2) # 休憩
 
     manage_storage(ref)
 
@@ -105,6 +99,6 @@ def manage_storage(ref):
         print("🗑️ メンテナンス完了。スッキリ整理したで！")
 
 if __name__ == "__main__":
-    print("🎬 Takeru Ultimate Collector V6 起動...")
+    print("🎬 Takeru Ultimate Collector V7 (PH-Exclusive Speed Edition) 起動...")
     collect()
     print("✨ 全ミッション完了や！")
