@@ -36,8 +36,13 @@ def get_html(url):
         return ""
 
 def collect():
-    # 🔍 ターゲットキーワード（日本人・アジア・アニメ・生っぽいやつ）
-    targets = ["日本人", "韓国", "chinese", "anime", "hentai", "コスプレ", "自撮り", "JK", "ハプニング"]
+    # 🔍 ターゲットキーワード（たける指定のワードを追加＆実写特化に厳選！）
+    # 🌟 追加：潮吹き, JK, パイパン, オナニー, 愛液
+    targets = [
+        "日本人", "韓国", "JK", "潮吹き", "パイパン", 
+        "オナニー", "愛液", "自撮り", "流出", "ハプニング", "女子大生"
+    ]
+    
     ref = db.reference('v_data/auto_videos')
     
     # 🌟 重複防止用の既存URLリスト取得
@@ -72,7 +77,7 @@ def collect():
                             'author': f"{site['name']}_Master",
                             'timestamp': time.time()
                         })
-                        # 🌟 これ！ここでリストに追加しとけば、同じ1時間のターンの重複も完全に防げる！
+                        # ターンの重複も防止
                         existing_urls.append(v_url)
                         print(f"✅ {site['name']}保存: {vid}")
             except: pass
@@ -89,10 +94,9 @@ def manage_storage(ref):
     count = len(data)
     print(f"📊 現在のストック: {count}本")
     
-    # 🌟 たけるの指定：1300本超えたら古い100本を抹消！
+    # 🌟 1300本超えたら古い100本を抹消
     if count >= 1300:
         print("🚨 1300本到達！古い動画100本をシュートするわ。")
-        # タイムスタンプの古い順（昇順）に並び替え
         items = sorted(data.items(), key=lambda x: x[1].get('timestamp', 0))
         
         for i in range(100):
@@ -102,6 +106,6 @@ def manage_storage(ref):
         print("🗑️ メンテナンス完了。スッキリ整理したで！")
 
 if __name__ == "__main__":
-    print("🎬 Takeru Ultimate Collector V3 (Perfect Edition) 起動...")
+    print("🎬 Takeru Ultimate Collector V3 (Specified Keywords) 起動...")
     collect()
     print("✨ 全ミッション完了や！")
