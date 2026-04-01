@@ -24,7 +24,6 @@ except Exception as e:
     exit(1)
 
 def get_html(url):
-    # 🌟 さらに人間っぽく見せるための最強ヘッダー
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
@@ -35,20 +34,22 @@ def get_html(url):
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
         "Referer": "https://www.google.com/",
-        "Cookie": f"platform=pc; bs={random.getrandbits(32)};" # 🌟 初回訪問を装うクッキー
+        "Cookie": f"platform=pc; bs={random.getrandbits(32)};"
     }
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as response:
         return response.read().decode('utf-8', errors='ignore')
 
 def collect():
-    # 🔍 キーワードを絞って確実に取りに行く
     targets = ["日本人", "韓国", "JK", "潮吹き", "パイパン", "オナニー", "愛液", "自撮り", "流出", "ハプニング", "女子大生"]
-    random.shuffle(targets) # 🌟 キーワードの順番も毎回変える
+    random.shuffle(targets)
 
     modes = ["mr", "mv", "tr"]
     selected_mode = random.choice(modes)
-    print(f"📡 潜入モード: {selected_mode}")
+    
+    # 🌟 ここがV10の超進化ポイント！「1〜15ページ目」のどこかをランダムで開く！
+    page_num = random.randint(1, 15)
+    print(f"📡 潜入モード: {selected_mode} (ページ: {page_num})")
 
     ref = db.reference('v_data/auto_videos')
     existing_data = ref.get()
@@ -58,7 +59,9 @@ def collect():
 
     for kw in targets:
         encoded_kw = urllib.parse.quote(kw)
-        ph_url = f"https://jp.pornhub.com/video/search?search={encoded_kw}&o={selected_mode}"
+        
+        # 🌟 URLに page=◯ を追加して奥深くを探るで！
+        ph_url = f"https://jp.pornhub.com/video/search?search={encoded_kw}&o={selected_mode}&page={page_num}"
         
         print(f"🚀 【{kw}】 ハント開始...")
         try:
@@ -66,7 +69,7 @@ def collect():
             ids = list(set(re.findall(r'viewkey=(ph[0-9a-f]+)', html)))
             
             if not ids:
-                print(f"⚠️ ヒットなし")
+                print(f"⚠️ ヒットなし（ページ深すぎたかも）")
                 continue
 
             added = 0
@@ -84,14 +87,16 @@ def collect():
                     added += 1
                     print(f"✅ 追加: {vid}")
             
-            # 🌟 人間がじっくり動画を選んでる風に装う
+            if added == 0:
+                print(f"⏩ 全部持ってたからスキップや！")
+
             wait_time = random.uniform(4, 10)
             print(f"💤 次の検索まで {wait_time:.1f}秒 待機中...")
             time.sleep(wait_time)
 
         except Exception as e:
             print(f"❌ 警告: {e}")
-            time.sleep(10) # 🌟 エラーが出たら多めに休む
+            time.sleep(10)
 
     manage_storage(ref)
 
