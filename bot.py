@@ -62,7 +62,7 @@ def collect():
                 html = get_html(site["url"])
                 ids = list(set(re.findall(site["re"], html)))
                 
-                # 各ワード・各サイトから最大4件ずつ追加（1時間で約100本増える計算）
+                # 各ワード・各サイトから最大4件ずつ追加
                 for vid in ids[:4]: 
                     v_url = f"{site['prefix']}{vid}"
                     if v_url not in existing_urls:
@@ -72,6 +72,8 @@ def collect():
                             'author': f"{site['name']}_Master",
                             'timestamp': time.time()
                         })
+                        # 🌟 これ！ここでリストに追加しとけば、同じ1時間のターンの重複も完全に防げる！
+                        existing_urls.append(v_url)
                         print(f"✅ {site['name']}保存: {vid}")
             except: pass
         
@@ -97,9 +99,9 @@ def manage_storage(ref):
             key_to_delete = items[i][0]
             ref.child(key_to_delete).delete()
         
-        print("🗑️ メンテナンス完了。1200本にスッキリ整理したで！")
+        print("🗑️ メンテナンス完了。スッキリ整理したで！")
 
 if __name__ == "__main__":
-    print("🎬 Takeru Ultimate Collector V2 (1300-Limit) 起動...")
+    print("🎬 Takeru Ultimate Collector V3 (Perfect Edition) 起動...")
     collect()
     print("✨ 全ミッション完了や！")
