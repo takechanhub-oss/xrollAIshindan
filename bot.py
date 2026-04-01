@@ -44,13 +44,6 @@ def collect():
     targets = ["日本人", "韓国", "JK", "潮吹き", "パイパン", "オナニー", "愛液", "自撮り", "流出", "ハプニング", "女子大生"]
     random.shuffle(targets)
 
-    modes = ["mr", "mv", "tr"]
-    selected_mode = random.choice(modes)
-    
-    # 🌟 ここがV10の超進化ポイント！「1〜15ページ目」のどこかをランダムで開く！
-    page_num = random.randint(1, 15)
-    print(f"📡 潜入モード: {selected_mode} (ページ: {page_num})")
-
     ref = db.reference('v_data/auto_videos')
     existing_data = ref.get()
     existing_urls = []
@@ -60,16 +53,20 @@ def collect():
     for kw in targets:
         encoded_kw = urllib.parse.quote(kw)
         
-        # 🌟 URLに page=◯ を追加して奥深くを探るで！
+        # 🌟 V11の超進化！キーワードごとに「モード」と「ページ(1〜5)」を毎回変える！
+        modes = ["mr", "mv", "tr"]
+        selected_mode = random.choice(modes)
+        page_num = random.randint(1, 5) # 浅瀬〜中深海を狙うで！
+        
         ph_url = f"https://jp.pornhub.com/video/search?search={encoded_kw}&o={selected_mode}&page={page_num}"
         
-        print(f"🚀 【{kw}】 ハント開始...")
+        print(f"🚀 【{kw}】 ハント開始... (モード:{selected_mode}, ページ:{page_num})")
         try:
             html = get_html(ph_url)
             ids = list(set(re.findall(r'viewkey=(ph[0-9a-f]+)', html)))
             
             if not ids:
-                print(f"⚠️ ヒットなし（ページ深すぎたかも）")
+                print(f"⚠️ ヒットなし（サイトの構造変わったかも？）")
                 continue
 
             added = 0
@@ -88,9 +85,9 @@ def collect():
                     print(f"✅ 追加: {vid}")
             
             if added == 0:
-                print(f"⏩ 全部持ってたからスキップや！")
+                print(f"⏩ 全部持ってたわ！次行くで！")
 
-            wait_time = random.uniform(4, 10)
+            wait_time = random.uniform(4, 9)
             print(f"💤 次の検索まで {wait_time:.1f}秒 待機中...")
             time.sleep(wait_time)
 
